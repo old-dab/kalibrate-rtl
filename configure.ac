@@ -1,5 +1,5 @@
 AC_PREREQ([2.64])
-AC_INIT([kalibrate], [0.4.1], [jl@thre.at], [kal])
+AC_INIT([kalibrate], [0.4.2], [jl@thre.at], [kal])
 AC_CONFIG_SRCDIR([src/fcch_detector.cc])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
@@ -27,6 +27,9 @@ AC_SEARCH_LIBS([basename], [rt])
 PKG_CHECK_MODULES(FFTW3, fftw3 >= 3.0)
 AC_SUBST(FFTW3_LIBS)
 AC_SUBST(FFTW3_CFLAGS)
+
+AC_CHECK_HEADERS(pthread.h,, [AC_MSG_ERROR([pthread.h required])])
+AC_CHECK_LIB(pthread, pthread_create, [LIBS="$LIBS -lpthread"])
 
 PKG_CHECK_MODULES(LIBRTLSDR, librtlsdr)
 AC_SUBST(LIBRTLSDR_LIBS)

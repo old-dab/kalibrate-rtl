@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2010, Joshua Lackey
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     *  Redistributions of source code must retain the above copyright
  *        notice, this list of conditions and the following disclaimer.
  *
@@ -54,12 +54,13 @@ static const char * const fftw_plan_name = ".kal_fftw_plan";
 
 
 fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
-   const float p, const float G) {
-
+   const float p, const float G)
+{
+#ifndef _WIN32
 	FILE *plan_fp;
 	char plan_name[BUFSIZ];
 	const char *home;
-
+#endif
 
 	m_D = D;
 	m_p = p;
@@ -85,21 +86,25 @@ fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
 		throw std::runtime_error("fcch_detector: fftw_malloc failed!");
 #ifndef _WIN32
 	home = getenv("HOME");
-	if(strlen(home) + strlen(fftw_plan_name) + 2 < sizeof(plan_name)) {
+	if(strlen(home) + strlen(fftw_plan_name) + 2 < sizeof(plan_name))
+	{
 		strcpy(plan_name, home);
 		strcat(plan_name, "/");
 		strcat(plan_name, fftw_plan_name);
-		if((plan_fp = fopen(plan_name, "r"))) {
+		if((plan_fp = fopen(plan_name, "r")))
+		{
 			fftw_import_wisdom_from_file(plan_fp);
 			fclose(plan_fp);
 		}
 		m_plan = fftw_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
 		   FFTW_MEASURE);
-		if((plan_fp = fopen(plan_name, "w"))) {
+		if((plan_fp = fopen(plan_name, "w")))
+		{
 			fftw_export_wisdom_to_file(plan_fp);
 			fclose(plan_fp);
 		}
-	} else
+	}
+	else
 #endif
 		m_plan = fftw_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
 		   FFTW_ESTIMATE);
@@ -108,21 +113,25 @@ fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
 }
 
 
-fcch_detector::~fcch_detector() {
-
-	if(m_w) {
+fcch_detector::~fcch_detector()
+{
+	if(m_w)
+	{
 		delete[] m_w;
 		m_w = 0;
 	}
-	if(m_x_cb) {
+	if(m_x_cb)
+	{
 		delete m_x_cb;
 		m_x_cb = 0;
 	}
-	if(m_y_cb) {
+	if(m_y_cb)
+	{
 		delete m_y_cb;
 		m_y_cb = 0;
 	}
-	if(m_e_cb) {
+	if(m_e_cb)
+	{
 		delete m_e_cb;
 		m_e_cb = 0;
 	}
@@ -138,26 +147,31 @@ static unsigned int g_count = 0,
 		    g_block_s = HIGH;
 
 
-static inline void low_to_high_init() {
-
+static inline void low_to_high_init()
+{
 	g_count = 0;
 	g_block_s = HIGH;
 }
 
 
-static inline unsigned int low_to_high(float e, float a) {
-
+static inline unsigned int low_to_high(float e, float a)
+{
 	unsigned int r = 0;
 
-	if(e > a) {
-		if(g_block_s == LOW) {
+	if(e > a)
+	{
+		if(g_block_s == LOW)
+		{
 			r = g_count;
 			g_block_s = HIGH;
 			g_count = 0;
 		}
 		g_count += 1;
-	} else {
-		if(g_block_s == HIGH) {
+	}
+	else
+	{
+		if(g_block_s == HIGH)
+		{
 			g_block_s = LOW;
 			g_count = 0;
 		}
@@ -168,24 +182,28 @@ static inline unsigned int low_to_high(float e, float a) {
 }
 
 
-static inline int peak_valley(complex *c, unsigned int c_len, complex peak, unsigned int peak_i, unsigned int width, float *p2m) {
-
+static inline int peak_valley(complex *c, unsigned int c_len, complex peak, unsigned int peak_i, unsigned int width, float *p2m)
+{
 	float valley = 0.0;
 	unsigned int i, valley_count = 0;
 
 	// these constants aren't the best for all burst types
-	for(i = 2; i < 2 + width; i++) {
-		if(i <= peak_i) {
+	for(i = 2; i < 2 + width; i++)
+	{
+		if(i <= peak_i)
+		{
 			valley += norm(c[peak_i - i]);
 			valley_count += 1;
 		}
-		if(peak_i + i < c_len) {
+		if(peak_i + i < c_len)
+		{
 			valley += norm(c[peak_i + i]);
 			valley_count += 1;
 		}
 	}
 
-	if(valley_count < 2) {
+	if(valley_count < 2)
+	{
 		fprintf(stderr, "error: bad valley_count\n");
 		return -1;
 	}
@@ -198,18 +216,17 @@ static inline int peak_valley(complex *c, unsigned int c_len, complex peak, unsi
 }
 
 
-static inline float sinc(const float x) {
-
+static inline float sinc(const float x)
+{
 	if((x <= -0.0001) || (0.0001 <= x))
 		return sinf(x) / x;
 	return 1.0;
 }
 
 
-static inline complex interpolate_point(const complex *s, const unsigned int s_len, const float s_i) {
-
+static inline complex interpolate_point(const complex *s, const unsigned int s_len, const float s_i)
+{
 	static const unsigned int filter_len = 21;
-
 	int start, end, i;
 	unsigned int d;
 	complex point;
@@ -227,17 +244,19 @@ static inline complex interpolate_point(const complex *s, const unsigned int s_l
 }
 
 
-static inline float peak_detect(const complex *s, const unsigned int s_len, complex *peak, float *avg_power) {
-
+static inline float peak_detect(const complex *s, const unsigned int s_len, complex *peak, float *avg_power)
+{
 	unsigned int i;
 	float max = -1.0, max_i = -1.0, sample_power, sum_power, early_i, late_i, incr;
 	complex early_p, late_p, cmax;
 
 	sum_power = 0;
-	for(i = 0; i < s_len; i++) {
+	for(i = 0; i < s_len; i++)
+	{
 		sample_power = norm(s[i]);
 		sum_power += sample_power;
-		if(sample_power > max) {
+		if(sample_power > max)
+		{
 			max = sample_power;
 			max_i = i;
 		}
@@ -246,7 +265,8 @@ static inline float peak_detect(const complex *s, const unsigned int s_len, comp
 	late_i = (max_i + 1 < s_len)? (max_i + 1) : s_len - 1;
 
 	incr = 0.5;
-	while(incr > 1.0 / 1024.0) {
+	while(incr > 1.0 / 1024.0)
+	{
 		early_p = interpolate_point(s, s_len, early_i);
 		late_p = interpolate_point(s, s_len, late_i);
 		if(norm(early_p) < norm(late_p))
@@ -271,8 +291,8 @@ static inline float peak_detect(const complex *s, const unsigned int s_len, comp
 }
 
 
-static inline float itof(float index, float sample_rate, unsigned int fft_size) {
-
+static inline float itof(float index, float sample_rate, unsigned int fft_size)
+{
 	double r = index * (sample_rate / (double)fft_size);
 
 	/*
@@ -285,11 +305,9 @@ static inline float itof(float index, float sample_rate, unsigned int fft_size) 
 }
 
 
-static inline unsigned int ftoi(float frequency, float sample_rate, unsigned int fft_size) {
-
-	unsigned int r = (frequency / sample_rate) * fft_size;
-
-	return r;
+static inline unsigned int ftoi(float frequency, float sample_rate, unsigned int fft_size)
+{
+	return (frequency / sample_rate) * fft_size;
 }
 
 
@@ -298,27 +316,28 @@ static inline unsigned int ftoi(float frequency, float sample_rate, unsigned int
 #endif /* !MIN */
 
 
-float fcch_detector::freq_detect(const complex *s, const unsigned int s_len, float *pm) {
-
+float fcch_detector::freq_detect(const complex *s, const unsigned int s_len, float *pm)
+{
 	unsigned int i, len;
 	float max_i, avg_power;
 	complex fft[FFT_SIZE], peak;
 
 	len = MIN(s_len, FFT_SIZE);
-	for(i = 0; i < len; i++) {
+	for(i = 0; i < len; i++)
+	{
 		m_in[i][0] = s[i].real();
 		m_in[i][1] = s[i].imag();
 	}
-	for(i = len; i < FFT_SIZE; i++) {
+	for(i = len; i < FFT_SIZE; i++)
+	{
 		m_in[i][0] = 0;
 		m_in[i][1] = 0;
 	}
 
 	fftw_execute(m_plan);
 
-	for(i = 0; i < FFT_SIZE; i++) {
+	for(i = 0; i < FFT_SIZE; i++)
 		fft[i] = complex(m_out[i][0], m_out[i][1]);
-	}
 
 	max_i = peak_detect(fft, FFT_SIZE, &peak, &avg_power);
 	if(pm)
@@ -327,11 +346,12 @@ float fcch_detector::freq_detect(const complex *s, const unsigned int s_len, flo
 }
 
 
-static inline void display_complex(const complex *s, unsigned int s_len) {
-
-	for(unsigned int i = 0; i < s_len; i++) {
+static inline void display_complex(const complex *s, unsigned int s_len)
+{
+	for(unsigned int i = 0; i < s_len; i++)
+	{
 		printf("%f\n", s[i].real());
-		fprintf(stderr, "%f\n", s[i].imag());
+		printf("%f\n", s[i].imag());
 	}
 }
 
@@ -343,22 +363,23 @@ static inline void display_complex(const complex *s, unsigned int s_len) {
  * 	3.  for each such neighborhood, take fft and calculate peak/mean
  * 	4.  if peak/mean > 50, then this is a valid finding.
  */
-unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed) {
-
+unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed)
+{
 	static const float sps = m_sample_rate / (1625000.0 / 6.0);
 	static const unsigned int MIN_FB_LEN = 100 * sps;
 	static const unsigned int MIN_PM = 50; // XXX arbitrary, depends on decimation
-
 	unsigned int len = 0, t, e_count, i, l_count, y_offset, y_len;
 	float e, *a, loff = 0, pm;
 	double sum = 0.0, avg, limit;
 	const complex *y;
 
 	// calculate the error for each sample
-	while(len < s_len) {
+	while(len < s_len)
+	{
 		t = m_x_cb->write(s + len, 1);
 		len += t;
-		if(!next_norm_error(&e)) {
+		if(!next_norm_error(&e))
+		{
 			m_e_cb->write(&e, 1);
 			sum += e;
 		}
@@ -371,18 +392,19 @@ unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, flo
 	avg = sum / (double)e_count;
 	limit = 0.7 * avg;
 
-	if(g_debug) {
+	if(g_debug)
 		printf("debug: error limit: %.1lf\n", limit);
-	}
 
 	// find neighborhoods where the error is smaller than the limit
 	low_to_high_init();
-	for(i = 0; i < e_count; i++) {
+	for(i = 0; i < e_count; i++)
+	{
 		l_count = low_to_high(a[i], limit);
 
 		// see if p/m indicates a pure tone
 		pm = 0;
-		if(l_count >= MIN_FB_LEN) {
+		if(l_count >= MIN_FB_LEN)
+		{
 			y_offset = i - l_count;
 			y_len = (l_count < m_fcch_burst_len)? l_count : m_fcch_burst_len;
 			y = s + y_offset;
@@ -404,34 +426,33 @@ unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, flo
 	if(offset)
 		*offset = loff;
 
-	if(g_debug) {
+	if(g_debug)
 		printf("debug: fcch_detector finished -----------------------------\n");
-	}
 
 	return 1;
 }
 
 
-unsigned int fcch_detector::update(const complex *s, const unsigned int s_len) {
-
+unsigned int fcch_detector::update(const complex *s, const unsigned int s_len)
+{
 	return m_x_cb->write(s, s_len);
 }
 
 
-unsigned int fcch_detector::get_delay() {
-
+unsigned int fcch_detector::get_delay()
+{
 	return m_w_len - 1 + m_D;
 }
 
 
-unsigned int fcch_detector::filter_len() {
-
+unsigned int fcch_detector::filter_len()
+{
 	return m_w_len;
 }
 
 
-static float vectornorm2(const complex *v, const unsigned int len) {
-
+static float vectornorm2(const complex *v, const unsigned int len)
+{
 	unsigned int i;
 	float e = 0.0;
 
@@ -449,8 +470,8 @@ static float vectornorm2(const complex *v, const unsigned int len) {
  *
  * So y and e are delayed by w_len - 1 + m_D.
  */
-int fcch_detector::next_norm_error(float *error) {
-
+int fcch_detector::next_norm_error(float *error)
+{
 	unsigned int i, n, max;
 	float E;
 	complex *x, y, e;
@@ -497,31 +518,31 @@ int fcch_detector::next_norm_error(float *error) {
 }
 
 
-complex *fcch_detector::dump_x(unsigned int *x_len) {
-
+complex *fcch_detector::dump_x(unsigned int *x_len)
+{
 	return (complex *)m_x_cb->peek(x_len);
 }
 
 
-complex *fcch_detector::dump_y(unsigned int *y_len) {
-
+complex *fcch_detector::dump_y(unsigned int *y_len)
+{
 	return (complex *)m_y_cb->peek(y_len);
 }
 
 
-unsigned int fcch_detector::y_buf_len() {
-
+unsigned int fcch_detector::y_buf_len()
+{
 	return m_y_cb->buf_len();
 }
 
 
-unsigned int fcch_detector::x_buf_len() {
-
+unsigned int fcch_detector::x_buf_len()
+{
 	return m_x_cb->buf_len();
 }
 
 
-unsigned int fcch_detector::x_purge(unsigned int len) {
-
+unsigned int fcch_detector::x_purge(unsigned int len)
+{
 	return m_x_cb->purge(len);
 }

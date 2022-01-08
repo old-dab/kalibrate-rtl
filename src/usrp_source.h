@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2010, Joshua Lackey
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     *  Redistributions of source code must retain the above copyright
  *        notice, this list of conditions and the following disclaimer.
  *
@@ -30,46 +30,32 @@
 #include "usrp_complex.h"
 #include "circular_buffer.h"
 
-
-class usrp_source {
+class usrp_source
+{
 public:
-	usrp_source(float sample_rate, long int fpga_master_clock_freq = 52000000);
-	usrp_source(unsigned int decimation, long int fpga_master_clock_freq = 52000000);
+	usrp_source(void);
 	~usrp_source();
 
-	int open(unsigned int subdev);
-	int read(complex *buf, unsigned int num_samples, unsigned int *samples_read);
+	int open(unsigned int device);
+	int read_sync(short *ibuf, short *qbuf, unsigned int len, int *n_read);
 	int fill(unsigned int num_samples, unsigned int *overrun);
 	int tune(double freq);
 	int set_freq_correction(int ppm);
-	bool set_antenna(int antenna);
-	bool set_gain(float gain);
+	bool set_gain(int gain);
 	bool set_dithering(bool enable);
+	int set_bandwidth(int bandwidth);
 	void start();
 	void stop();
 	int flush(unsigned int flush_count = FLUSH_COUNT);
 	circular_buffer *get_buffer();
-
 	float sample_rate();
-
-	static const unsigned int side_A = 0;
-	static const unsigned int side_B = 1;
 
 	double			m_center_freq;
 	int			m_freq_corr;
 
 private:
-	void calculate_decimation();
-
-	rtlsdr_dev_t		*dev;
-
 	float			m_sample_rate;
-	float			m_desired_sample_rate;
-	unsigned int		m_decimation;
-
-	long int		m_fpga_master_clock_freq;
-
-	circular_buffer *	m_cb;
+	circular_buffer 	*m_cb;
 
 	/*
 	 * This mutex protects access to the USRP and daughterboards but not
@@ -79,11 +65,4 @@ private:
 
 	static const unsigned int	FLUSH_COUNT	= 10;
 	static const unsigned int	CB_LEN		= (16 * 16384);
-	static const int		NCHAN		= 1;
-	static const int		INITIAL_MUX	= -1;
-	static const int		FUSB_BLOCK_SIZE	= 1024;
-	static const int		FUSB_NBLOCKS	= 16 * 8;
-	static const char *		FPGA_FILENAME() {
-		return "std_2rxhb_2tx.rbf";
-	}
 };
