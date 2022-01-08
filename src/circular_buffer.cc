@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2010, Joshua Lackey
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     *  Redistributions of source code must retain the above copyright
  *        notice, this list of conditions and the following disclaimer.
  *
@@ -50,13 +50,13 @@
 #endif /* !D_HOST_OSX */
 
 #include "circular_buffer.h"
-//#include <cstdio>
 
 #ifndef D_HOST_OSX
 #ifndef _WIN32
-circular_buffer::circular_buffer(const unsigned int buf_len,
-   const unsigned int item_size, const unsigned int overwrite) {
 
+circular_buffer::circular_buffer(const unsigned int buf_len,
+   const unsigned int item_size, const unsigned int overwrite)
+{
 	int shm_id_temp, shm_id_guard, shm_id_buf;
 	void *base;
 
@@ -74,17 +74,19 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	if(m_buf_size % m_pagesize)
 		m_buf_size = (m_buf_size + m_pagesize) & ~(m_pagesize - 1);
 	m_buf_len = m_buf_size / item_size;
-	
+
 	// create an address-range that can contain everything
 	if((shm_id_temp = shmget(IPC_PRIVATE, 2 * m_pagesize + 2 * m_buf_size,
-	   IPC_CREAT | S_IRUSR | S_IWUSR)) == -1) {
+	   IPC_CREAT | S_IRUSR | S_IWUSR)) == -1)
+	{
 		perror("shmget");
 		throw std::runtime_error("circular_buffer: shmget");
 	}
 
 	// create a read-only guard page
 	if((shm_id_guard = shmget(IPC_PRIVATE, m_pagesize,
-	   IPC_CREAT | S_IRUSR)) == -1) {
+	   IPC_CREAT | S_IRUSR)) == -1)
+	{
 		shmctl(shm_id_temp, IPC_RMID, 0);
 		perror("shmget");
 		throw std::runtime_error("circular_buffer: shmget");
@@ -92,7 +94,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 
 	// create the data buffer
 	if((shm_id_buf = shmget(IPC_PRIVATE, m_buf_size, IPC_CREAT | S_IRUSR |
-	   S_IWUSR)) == -1) {
+	   S_IWUSR)) == -1)
+	{
 		perror("shmget");
 		shmctl(shm_id_temp, IPC_RMID, 0);
 		shmctl(shm_id_guard, IPC_RMID, 0);
@@ -100,7 +103,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	}
 
 	// attach temporary memory to get an address-range
-	if((base = shmat(shm_id_temp, 0, 0)) == (void *)(-1)) {
+	if((base = shmat(shm_id_temp, 0, 0)) == (void *)(-1))
+	{
 		perror("shmat");
 		shmctl(shm_id_temp, IPC_RMID, 0);
 		shmctl(shm_id_guard, IPC_RMID, 0);
@@ -115,9 +119,10 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	shmdt(base);
 
 	// race condition here
-	
+
 	// map first copy of guard page with previous address
-	if(shmat(shm_id_guard, base, SHM_RDONLY) == (void *)(-1)) {
+	if(shmat(shm_id_guard, base, SHM_RDONLY) == (void *)(-1))
+	{
 		perror("shmat");
 		shmctl(shm_id_guard, IPC_RMID, 0);
 		shmctl(shm_id_buf, IPC_RMID, 0);
@@ -125,7 +130,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	}
 
 	// map first copy of the buffer
-	if(shmat(shm_id_buf, (char *)base + m_pagesize, 0) == (void *)(-1)) {
+	if(shmat(shm_id_buf, (char *)base + m_pagesize, 0) == (void *)(-1))
+	{
 		perror("shmat");
 		shmctl(shm_id_guard, IPC_RMID, 0);
 		shmctl(shm_id_buf, IPC_RMID, 0);
@@ -135,7 +141,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 
 	// map second copy of the buffer
 	if(shmat(shm_id_buf, (char *)base + m_pagesize + m_buf_size, 0) ==
-	   (void *)(-1)) {
+	   (void *)(-1))
+	{
 		perror("shmat");
 		shmctl(shm_id_guard, IPC_RMID, 0);
 		shmctl(shm_id_buf, IPC_RMID, 0);
@@ -146,7 +153,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 
 	// map second copy of guard page
 	if(shmat(shm_id_guard, (char *)base + m_pagesize + 2 * m_buf_size,
-	   SHM_RDONLY) == (void *)(-1)) {
+	   SHM_RDONLY) == (void *)(-1))
+	{
 		perror("shmat");
 		shmctl(shm_id_guard, IPC_RMID, 0);
 		shmctl(shm_id_buf, IPC_RMID, 0);
@@ -176,8 +184,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	pthread_mutex_init(&m_mutex, 0);
 }
 
-circular_buffer::~circular_buffer() {
-
+circular_buffer::~circular_buffer()
+{
 	shmdt((char *)m_base + m_pagesize + 2 * m_buf_size);
 	shmdt((char *)m_base + m_pagesize + m_buf_size);
 	shmdt((char *)m_base + m_pagesize);
@@ -186,7 +194,8 @@ circular_buffer::~circular_buffer() {
 
 #else
 circular_buffer::circular_buffer(const unsigned int buf_len,
-   const unsigned int item_size, const unsigned int overwrite) {
+   const unsigned int item_size, const unsigned int overwrite)
+{
 
 	if(!buf_len)
 		throw std::runtime_error("circular_buffer: buffer len is 0");
@@ -200,7 +209,7 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	m_buf_len = m_buf_size / item_size;
 
 
-  d_handle = CreateFileMapping(INVALID_HANDLE_VALUE,    // use paging file
+	d_handle = CreateFileMapping(INVALID_HANDLE_VALUE,    // use paging file
 			       NULL,                    // default security
 			       PAGE_READWRITE,          // read/write access
 			       0,                       // max. object size
@@ -208,46 +217,49 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 			       NULL);       // name of mapping object
 
 
-  if (d_handle == NULL || d_handle == INVALID_HANDLE_VALUE){
-    throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
-  }
+	if (d_handle == NULL || d_handle == INVALID_HANDLE_VALUE)
+		throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
 
-  // Allocate virtual memory of the needed size, then free it so we can use it
-  LPVOID first_tmp;
-  first_tmp = VirtualAlloc( NULL, 2*m_buf_size, MEM_RESERVE, PAGE_NOACCESS );
-  if (first_tmp == NULL){
-    CloseHandle(d_handle);         // cleanup
-    throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
-  }
+	// Allocate virtual memory of the needed size, then free it so we can use it
+	LPVOID first_tmp;
+	first_tmp = VirtualAlloc( NULL, 2*m_buf_size, MEM_RESERVE, PAGE_NOACCESS );
+	if (first_tmp == NULL)
+	{
+		CloseHandle(d_handle);         // cleanup
+		throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
+	}
 
-  if (VirtualFree(first_tmp, 0, MEM_RELEASE) == 0){
-    CloseHandle(d_handle);         // cleanup
-    throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
-  }
+	if (VirtualFree(first_tmp, 0, MEM_RELEASE) == 0)
+	{
+		CloseHandle(d_handle);         // cleanup
+		throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
+	}
 
-  d_first_copy =  MapViewOfFileEx((HANDLE)d_handle,   // handle to map object
+	d_first_copy =  MapViewOfFileEx((HANDLE)d_handle,   // handle to map object
 				   FILE_MAP_WRITE,    // read/write permission
 				   0,
 				   0,
 				   m_buf_size,
 				   first_tmp);
-  if (d_first_copy != first_tmp){
-    CloseHandle(d_handle);         // cleanup
-    throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
-  }
+	if (d_first_copy != first_tmp)
+	{
+		CloseHandle(d_handle);         // cleanup
+		throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
+	}
 
-  d_second_copy =  MapViewOfFileEx((HANDLE)d_handle,   // handle to map object
+	d_second_copy =  MapViewOfFileEx((HANDLE)d_handle,   // handle to map object
 				   FILE_MAP_WRITE,     // read/write permission
 				   0,
 				   0,
 				   m_buf_size,
 				   (char *)first_tmp + m_buf_size);//(LPVOID) ((char *)d_first_copy + size));
 
-  if (d_second_copy != (char *)first_tmp + m_buf_size){
-    UnmapViewOfFile(d_first_copy);
-    CloseHandle(d_handle);                      // cleanup
-    throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
-  }
+	if (d_second_copy != (char *)first_tmp + m_buf_size)
+	{
+		UnmapViewOfFile(d_first_copy);
+		CloseHandle(d_handle);                      // cleanup
+		throw std::runtime_error ("gr_vmcircbuf_mmap_createfilemapping");
+	}
 
 	// save a pointer to the data
 	m_buf = d_first_copy;// (char *)base + m_pagesize;
@@ -261,9 +273,10 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 
 	pthread_mutex_init(&m_mutex, 0);
 
-  }
+}
 
-circular_buffer::~circular_buffer() {
+circular_buffer::~circular_buffer()
+{
 	UnmapViewOfFile(d_first_copy);
 	UnmapViewOfFile(d_second_copy);
 	CloseHandle(d_handle);
@@ -279,8 +292,8 @@ circular_buffer::~circular_buffer() {
  * was a reason.
  */
 circular_buffer::circular_buffer(const unsigned int buf_len,
-   const unsigned int item_size, const unsigned int overwrite) {
-
+   const unsigned int item_size, const unsigned int overwrite)
+{
 	int shm_fd;
 	char shm_name[255]; // XXX should be NAME_MAX
 	void *base;
@@ -304,13 +317,15 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	snprintf(shm_name, sizeof(shm_name), "/kalibrate-%d", getpid());
 
 	// create a Posix shared memory object
-	if((shm_fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
+	if((shm_fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) == -1)
+	{
 		perror("shm_open");
 		throw std::runtime_error("circular_buffer: shm_open");
 	}
 
 	// create enough space to hold everything
-	if(ftruncate(shm_fd, 2 * m_pagesize + 2 * m_buf_size) == -1) {
+	if(ftruncate(shm_fd, 2 * m_pagesize + 2 * m_buf_size) == -1)
+	{
 		perror("ftruncate");
 		close(shm_fd);
 		shm_unlink(shm_name);
@@ -318,7 +333,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	}
 
 	// get an address for the buffer
-	if((base = mmap(0, 2 * m_pagesize + 2 * m_buf_size, PROT_NONE, MAP_SHARED, shm_fd, 0)) == MAP_FAILED) {
+	if((base = mmap(0, 2 * m_pagesize + 2 * m_buf_size, PROT_NONE, MAP_SHARED, shm_fd, 0)) == MAP_FAILED)
+	{
 		perror("mmap");
 		close(shm_fd);
 		shm_unlink(shm_name);
@@ -326,7 +342,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	}
 
 	// unmap everything but the first guard page
-	if(munmap((char *)base + m_pagesize, m_pagesize + 2 * m_buf_size) == -1) {
+	if(munmap((char *)base + m_pagesize, m_pagesize + 2 * m_buf_size) == -1)
+	{
 		perror("munmap");
 		close(shm_fd);
 		shm_unlink(shm_name);
@@ -336,7 +353,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	// race condition
 
 	// map first copy of the buffer
-	if(mmap((char *)base + m_pagesize, m_buf_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, shm_fd, m_pagesize) == MAP_FAILED) {
+	if(mmap((char *)base + m_pagesize, m_buf_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, shm_fd, m_pagesize) == MAP_FAILED)
+	{
 		perror("mmap");
 		munmap(base, 2 * m_pagesize + 2 * m_buf_size);
 		close(shm_fd);
@@ -354,7 +372,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 	}
 
 	// map second copy of the guard page
-	if(mmap((char *)base + m_pagesize + 2 * m_buf_size, m_pagesize, PROT_NONE, MAP_SHARED | MAP_FIXED, shm_fd, 0) == MAP_FAILED) {
+	if(mmap((char *)base + m_pagesize + 2 * m_buf_size, m_pagesize, PROT_NONE, MAP_SHARED | MAP_FIXED, shm_fd, 0) == MAP_FAILED)
+	{
 		perror("mmap");
 		munmap(base, 2 * m_pagesize + 2 * m_buf_size);
 		close(shm_fd);
@@ -383,8 +402,8 @@ circular_buffer::circular_buffer(const unsigned int buf_len,
 }
 
 
-circular_buffer::~circular_buffer() {
-
+circular_buffer::~circular_buffer()
+{
 	munmap(m_base, 2 * m_pagesize + 2 * m_buf_size);
 }
 #endif /* !D_HOST_OSX */
@@ -394,8 +413,8 @@ circular_buffer::~circular_buffer() {
  * The amount to read can only grow unless someone calls read after this is
  * called.  No real good way to tie the two together.
  */
-unsigned int circular_buffer::data_available() {
-
+unsigned int circular_buffer::data_available()
+{
 	unsigned int amt;
 
 	pthread_mutex_lock(&m_mutex);
@@ -406,8 +425,8 @@ unsigned int circular_buffer::data_available() {
 }
 
 
-unsigned int circular_buffer::space_available() {
-
+unsigned int circular_buffer::space_available()
+{
 	unsigned int amt;
 
 	pthread_mutex_lock(&m_mutex);
@@ -429,15 +448,16 @@ unsigned int circular_buffer::space_available() {
  * buf_len is in terms of m_item_size
  * len, m_written, and m_read are all in terms of m_item_size
  */
-unsigned int circular_buffer::read(void *buf, const unsigned int buf_len) {
-
+unsigned int circular_buffer::read(void *buf, const unsigned int buf_len)
+{
 	unsigned int len;
 
 	pthread_mutex_lock(&m_mutex);
 	len = MIN(buf_len, m_written - m_read);
 	memcpy(buf, (char *)m_buf + m_r, len * m_item_size);
 	m_read += len;
-	if(m_read == m_written) {
+	if(m_read == m_written)
+	{
 		m_r = m_w = 0;
 		m_read = m_written = 0;
 	} else
@@ -454,8 +474,8 @@ unsigned int circular_buffer::read(void *buf, const unsigned int buf_len) {
  *	Don't use read() while you are peek()'ing.  write() should be
  *	okay unless you have an overwrite buffer.
  */
-void *circular_buffer::peek(unsigned int *buf_len) {
-
+void *circular_buffer::peek(unsigned int *buf_len)
+{
 	unsigned int len;
 	void *p;
 
@@ -471,8 +491,8 @@ void *circular_buffer::peek(unsigned int *buf_len) {
 }
 
 
-void *circular_buffer::poke(unsigned int *buf_len) {
-
+void *circular_buffer::poke(unsigned int *buf_len)
+{
 	unsigned int len;
 	void *p;
 
@@ -488,17 +508,19 @@ void *circular_buffer::poke(unsigned int *buf_len) {
 }
 
 
-unsigned int circular_buffer::purge(const unsigned int buf_len) {
-
+unsigned int circular_buffer::purge(const unsigned int buf_len)
+{
 	unsigned int len;
 
 	pthread_mutex_lock(&m_mutex);
 	len = MIN(buf_len, m_written - m_read);
 	m_read += len;
-	if(m_read == m_written) {
+	if(m_read == m_written)
+	{
 		m_r = m_w = 0;
 		m_read = m_written = 0;
-	} else
+	}
+	else
 		m_r = (m_r + len * m_item_size) % m_buf_size;
 	pthread_mutex_unlock(&m_mutex);
 
@@ -507,24 +529,29 @@ unsigned int circular_buffer::purge(const unsigned int buf_len) {
 
 
 unsigned int circular_buffer::write(const void *buf,
-   const unsigned int buf_len) {
+   const unsigned int buf_len)
+{
 
 	unsigned int len, buf_off = 0;
 
 	pthread_mutex_lock(&m_mutex);
-	if(m_overwrite) {
-		if(buf_len > m_buf_len) {
+	if(m_overwrite)
+	{
+		if(buf_len > m_buf_len)
+		{
 			buf_off = buf_len - m_buf_len;
 			len = m_buf_len;
 		} else
 			len = buf_len;
-	} else
+	}
+	else
 		len = MIN(buf_len, m_buf_len - (m_written - m_read));
 	memcpy((char *)m_buf + m_w, (char *)buf + buf_off * m_item_size,
 	   len * m_item_size);
 	m_written += len;
 	m_w = (m_w + len * m_item_size) % m_buf_size;
-	if(m_written > m_buf_len + m_read) {
+	if(m_written > m_buf_len + m_read)
+	{
 		m_read = m_written - m_buf_len;
 		m_r = m_w;
 	}
@@ -534,8 +561,8 @@ unsigned int circular_buffer::write(const void *buf,
 }
 
 
-void circular_buffer::wrote(unsigned int len) {
-
+void circular_buffer::wrote(unsigned int len)
+{
 	pthread_mutex_lock(&m_mutex);
 	m_written += len;
 	m_w = (m_w + len * m_item_size) % m_buf_size;
@@ -543,8 +570,8 @@ void circular_buffer::wrote(unsigned int len) {
 }
 
 
-void circular_buffer::flush() {
-
+void circular_buffer::flush()
+{
 	pthread_mutex_lock(&m_mutex);
 	m_read = m_written = 0;
 	m_r = m_w = 0;
@@ -559,19 +586,19 @@ void circular_buffer::flush_nolock() {
 }
 
 
-void circular_buffer::lock() {
-
+void circular_buffer::lock()
+{
 	pthread_mutex_lock(&m_mutex);
 }
 
 
-void circular_buffer::unlock() {
-
+void circular_buffer::unlock()
+{
 	pthread_mutex_unlock(&m_mutex);
 }
 
 
-unsigned int circular_buffer::buf_len() {
-
+unsigned int circular_buffer::buf_len()
+{
 	return m_buf_len;
 }
