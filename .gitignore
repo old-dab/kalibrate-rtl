@@ -21,3 +21,4 @@ install-sh
 INSTALL
 aclocal.m4
 ltmain.sh
+build
