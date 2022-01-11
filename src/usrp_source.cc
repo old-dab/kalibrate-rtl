@@ -94,6 +94,7 @@ usrp_source::~usrp_source()
 {
 	stop();
 	delete m_cb;
+	rtlsdr_cancel_async(dev);
 	rtlsdr_close(dev);
 	pthread_mutex_destroy(&m_u_mutex);
 }

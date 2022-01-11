@@ -37,7 +37,6 @@ public:
 	~usrp_source();
 
 	int open(unsigned int device);
-	int read_sync(short *ibuf, short *qbuf, unsigned int len, int *n_read);
 	int fill(unsigned int num_samples, unsigned int *overrun);
 	int tune(double freq);
 	int set_freq_correction(int ppm);

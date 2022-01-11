@@ -106,6 +106,7 @@ int main(int argc, char **argv)
 	int gain = 0;
 	double freq = -1.0;
 	usrp_source *u;
+	int r;
 
 	if(!strcmp("miri_kal", argv[0]))
 		gain = 70;
@@ -278,11 +279,14 @@ int main(int argc, char **argv)
 		printf("Tuned to %.6fMHz (reported tuner error: %.0fHz)\n",
 		   u->m_center_freq / 1e6, tuner_error);
 
-		return offset_detect(u, hz_adjust, tuner_error);
+		r = offset_detect(u, hz_adjust, tuner_error);
 	}
-
-	printf("%s: Scanning for %s base stations.\n",
-	   argv[0], bi_to_str(bi));
-
-	return c0_detect(u, bi);
+	else
+	{
+		printf("%s: Scanning for %s base stations.\n",
+		argv[0], bi_to_str(bi));
+		r = c0_detect(u, bi);
+	}
+	//delete u;
+	return r;
 }
