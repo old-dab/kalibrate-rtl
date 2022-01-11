@@ -58,10 +58,10 @@ static double vectornorm2(const complex *v, const unsigned int len)
 
 int c0_detect(usrp_source *u, int bi)
 {
-	int i, tuner_gain;
+	int i, tuner_gain, max_chan_index = -1;
 	unsigned int overruns, b_len, frames_len, found_count, r;
 	float offset, effective_offset, min_offset, max_offset;
-	double freq, sps, power;
+	double freq, sps, power, max_chan_power = 0.0;
 	complex *b;
 	circular_buffer *ub;
 	fcch_detector *detector = new fcch_detector(u->sample_rate());
@@ -125,16 +125,30 @@ int c0_detect(usrp_source *u, int bi)
 			found_count++;
 			printf("    chan: %4d (%.1fMHz ", i, freq / 1e6);
 			display_freq(effective_offset);
-			printf(")    power: %7.0f \ttuner gain: %ddB\n", power, tuner_gain);
+			printf(")    power: %.0f", power);
+			double ref_level = 66.0;	// HA: max level i could quickly achieve with -g 50
+			double powerlevel = 10.0 * log10(power+ 1E-20) - ref_level;
+			printf("\tlevel: %.1fdB", powerlevel);
+			printf("\ttuner_gain: %ddB", tuner_gain);
+			printf("\tsum: %.1fdB\n", powerlevel+tuner_gain);
+
+			if (max_chan_index < 0 || max_chan_power < (powerlevel+tuner_gain))
+			{
+				max_chan_index = i;
+				max_chan_power = powerlevel+tuner_gain;
+			}
 		}
 		else if(g_verbosity > 0)
 		{
-			printf("    chan: %4d (%.1fMHz):\tpower: %7.0f \ttuner gain: %ddB\n",
-			   i, freq / 1e6, power, tuner_gain);
+			printf("    chan: %4d (%.1fMHz):\tpower: %.0f\n",
+			   i, freq / 1e6, power);
 		}
 
 	}
 	printf("%d base stations found !\n", found_count);
+
+	if (max_chan_index >= 0)
+		printf("channel with max power - if AGC is off: %4d\n", max_chan_index);
 
 	if (found_count == 1)
 	{
