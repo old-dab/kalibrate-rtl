@@ -125,8 +125,7 @@ int main(int argc, char **argv)
 			case 's':
 				if((bi = str_to_bi(optarg)) == -1)
 				{
-					fprintf(stderr, "error: bad band "
-					   "indicator: ``%s''\n", optarg);
+					fprintf(stderr, "Error: invalid band indicator: '%s'\n\n", optarg);
 					usage(argv[0]);
 				}
 				bts_scan = 1;
@@ -135,8 +134,7 @@ int main(int argc, char **argv)
 			case 'b':
 				if((bi = str_to_bi(optarg)) == -1)
 				{
-					fprintf(stderr, "error: bad band "
-					   "indicator: ``%s''\n", optarg);
+					fprintf(stderr, "Error: invalid band indicator: '%s'\n\n", optarg);
 					usage(argv[0]);
 				}
 				break;
