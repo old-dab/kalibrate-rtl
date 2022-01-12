@@ -22,6 +22,7 @@ add_compile_options(-Wsign-compare)
 add_compile_options(-fvisibility=hidden)
 add_definitions(-D_GNU_SOURCE)
 add_definitions(-DHAVE_DITHERING=1)
+add_definitions(-DHAVE_GET_TUNER_GAIN=1)
 
 if(MINGW)
 # Fix printf %zu

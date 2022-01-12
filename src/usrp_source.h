@@ -43,6 +43,7 @@ public:
 	bool set_gain(int gain);
 	bool set_dithering(bool enable);
 	int set_bandwidth(int bandwidth);
+	int get_tuner_gain(void);
 	void start();
 	void stop();
 	int flush(unsigned int flush_count = FLUSH_COUNT);

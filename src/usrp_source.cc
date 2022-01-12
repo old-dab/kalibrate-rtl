@@ -203,6 +203,20 @@ bool usrp_source::set_gain(int gain)
 }
 
 
+int usrp_source::get_tuner_gain(void)
+{
+	unsigned char reg_values[256];
+	int len;
+	int tuner_gain = 0;
+
+#if HAVE_GET_TUNER_GAIN == 1
+	rtlsdr_get_tuner_i2c_register(dev, reg_values, &len, &tuner_gain);
+	tuner_gain = (tuner_gain + 5) / 10;
+#endif
+	return tuner_gain;
+}
+
+
 /*
  * open() should be called before multiple threads access usrp_source.
  */

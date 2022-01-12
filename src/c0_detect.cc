@@ -58,7 +58,7 @@ static double vectornorm2(const complex *v, const unsigned int len)
 
 int c0_detect(usrp_source *u, int bi)
 {
-	int i;
+	int i, tuner_gain;
 	unsigned int overruns, b_len, frames_len, found_count, r;
 	float offset, effective_offset, min_offset, max_offset;
 	double freq, sps, power;
@@ -109,6 +109,7 @@ int c0_detect(usrp_source *u, int bi)
 
 		r = detector->scan(b, b_len, &offset, 0);
 		effective_offset = offset - GSM_RATE / 4;
+		tuner_gain = u->get_tuner_gain();
 		if(r && (fabsf(effective_offset) < ERROR_DETECT_OFFSET_MAX))
 		{
 			// found
@@ -124,12 +125,12 @@ int c0_detect(usrp_source *u, int bi)
 			found_count++;
 			printf("    chan: %4d (%.1fMHz ", i, freq / 1e6);
 			display_freq(effective_offset);
-			printf(")    power: %.0f\n", power);
+			printf(")    power: %7.0f \ttuner gain: %ddB\n", power, tuner_gain);
 		}
 		else if(g_verbosity > 0)
 		{
-			printf("    chan: %4d (%.1fMHz):\tpower: %.0f\n",
-			   i, freq / 1e6, power);
+			printf("    chan: %4d (%.1fMHz):\tpower: %7.0f \ttuner gain: %ddB\n",
+			   i, freq / 1e6, power, tuner_gain);
 		}
 
 	}
