@@ -363,7 +363,7 @@ static inline void display_complex(const complex *s, unsigned int s_len)
  * 	3.  for each such neighborhood, take fft and calculate peak/mean
  * 	4.  if peak/mean > 50, then this is a valid finding.
  */
-unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed)
+unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed, float *snr)
 {
 	static const float sps = m_sample_rate / (1625000.0 / 6.0);
 	static const unsigned int MIN_FB_LEN = 100 * sps;
@@ -409,6 +409,8 @@ unsigned int fcch_detector::scan(const complex *s, const unsigned int s_len, flo
 			y_len = (l_count < m_fcch_burst_len)? l_count : m_fcch_burst_len;
 			y = s + y_offset;
 			loff = freq_detect(y, y_len, &pm);
+			if (snr)
+				*snr = pm;
 			if(g_debug)
 				printf("debug: %.0f\t%f\t%f\n", (double)l_count / sps, pm, loff);
 			if(pm > MIN_PM)

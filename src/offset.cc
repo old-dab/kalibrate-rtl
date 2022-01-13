@@ -42,7 +42,7 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 	int notfound = 0;
 	unsigned int s_len, b_len, consumed, count;
 	float offset = 0.0, min = 0.0, max = 0.0, avg_offset = 0.0,
-		stddev = 0.0, sps, offsets[AVG_COUNT];
+		stddev = 0.0, sps, snr = 0.0F, offsets[AVG_COUNT];
 	double total_ppm;
 	complex *cbuf;
 	fcch_detector *l;
@@ -80,7 +80,7 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 		cbuf = (complex *)cb->peek(&b_len);
 
 		// search the buffer for a pure tone
-		if(l->scan(cbuf, b_len, &offset, &consumed))
+		if(l->scan(cbuf, b_len, &offset, &consumed, &snr))
 		{
 
 			// FCH is a sine wave at GSM_RATE / 4
@@ -122,5 +122,7 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 	total_ppm = u->m_freq_corr - ((avg_offset + hz_adjust) / u->m_center_freq) * 1000000;
 
 	printf("average absolute error: %.2f ppm\n", total_ppm);
+	float snr_level = 10.0 * log10(snr + 1E-20);
+	printf("snr: %.1fdB\n", snr_level);
 	return 0;
 }

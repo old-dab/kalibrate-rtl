@@ -60,7 +60,7 @@ int c0_detect(usrp_source *u, int bi)
 {
 	int i, tuner_gain, max_chan_index = -1;
 	unsigned int overruns, b_len, frames_len, found_count, r;
-	float offset, effective_offset, min_offset, max_offset;
+	float offset, effective_offset, min_offset, max_offset, snr;
 	double freq, sps, power, max_chan_power = 0.0;
 	complex *b;
 	circular_buffer *ub;
@@ -107,7 +107,7 @@ int c0_detect(usrp_source *u, int bi)
 		b = (complex *)ub->peek(&b_len);
 		power = sqrt(vectornorm2(b, frames_len));
 
-		r = detector->scan(b, b_len, &offset, 0);
+		r = detector->scan(b, b_len, &offset, 0, &snr);
 		effective_offset = offset - GSM_RATE / 4;
 		tuner_gain = u->get_tuner_gain();
 		if(r && (fabsf(effective_offset) < ERROR_DETECT_OFFSET_MAX))
@@ -128,9 +128,11 @@ int c0_detect(usrp_source *u, int bi)
 			printf(")    power: %.0f", power);
 			double ref_level = 66.0;	// HA: max level i could quickly achieve with -g 50
 			double powerlevel = 10.0 * log10(power+ 1E-20) - ref_level;
+			float snr_level = 10.0 * log10(snr + 1E-20);
 			printf("\tlevel: %.1fdB", powerlevel);
 			printf("\ttuner_gain: %ddB", tuner_gain);
-			printf("\tsum: %.1fdB\n", powerlevel+tuner_gain);
+			printf("\tsum: %.1fdB", powerlevel+tuner_gain);
+			printf("\tsnr: %.1fdB\n", snr_level);
 
 			if (max_chan_index < 0 || max_chan_power < (powerlevel+tuner_gain))
 			{
