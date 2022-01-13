@@ -91,7 +91,7 @@ void usage(char *prog)
 	printf("\t-E\tmanual frequency offset in hz\n");
 	printf("\t-v\tverbose\n");
 	printf("\t-D\tenable debug messages\n");
-	printf("\t-h\thelp\n");
+	printf("%s", rtlsdr_get_opt_help(g_verbosity));
 	exit(-1);
 }
 
@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 	int bandwidth = 200000;
 	int dithering = true;
 	unsigned int device = 0;
+	const char * rtlOpts = NULL;
 	int gain = 0;
 	double freq = -1.0;
 	usrp_source *u;
@@ -110,7 +111,7 @@ int main(int argc, char **argv)
 
 	if(!strcmp("miri_kal", argv[0]))
 		gain = 70;
-	while((c = getopt(argc, argv, "f:b:c:s:g:e:w:E:Nd:vDh?")) != EOF)
+	while((c = getopt(argc, argv, "f:b:c:s:g:e:w:E:Nd:O:vDh?")) != EOF)
 	{
 		switch(c)
 		{
@@ -161,6 +162,10 @@ int main(int argc, char **argv)
 
 			case 'd':
 				device = strtol(optarg, 0, 0);
+				break;
+
+			case 'O':
+				rtlOpts = optarg;
 				break;
 
 			case 'v':
@@ -261,6 +266,10 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	if (rtlOpts) {
+		rtlsdr_set_opt_string(u->dev_handle(), rtlOpts, g_verbosity);
+	}
+
 	if(!bts_scan)
 	{
 		if(!u->tune(freq+hz_adjust))
@@ -285,6 +294,6 @@ int main(int argc, char **argv)
 		argv[0], bi_to_str(bi));
 		r = c0_detect(u, bi);
 	}
-	//delete u;
+	delete u;
 	return r;
 }

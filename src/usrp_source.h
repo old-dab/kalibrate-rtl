@@ -49,6 +49,7 @@ public:
 	int flush(unsigned int flush_count = FLUSH_COUNT);
 	circular_buffer *get_buffer();
 	float sample_rate();
+	rtlsdr_dev_t	*dev_handle();
 
 	double			m_center_freq;
 	int			m_freq_corr;

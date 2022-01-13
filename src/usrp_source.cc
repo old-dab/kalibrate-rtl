@@ -263,6 +263,10 @@ int usrp_source::open(unsigned int dev_index)
 	return 0;
 }
 
+rtlsdr_dev_t	*usrp_source::dev_handle()
+{
+	return dev;
+}
 
 int usrp_source::fill(unsigned int num_samples, unsigned int *overrun_i)
 {
