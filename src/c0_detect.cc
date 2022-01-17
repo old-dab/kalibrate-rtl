@@ -60,7 +60,7 @@ int c0_detect(usrp_source *u, int bi)
 {
 	int i, tuner_gain;
 	unsigned int overruns, b_len, frames_len, found_count, r;
-	float offset, effective_offset, min_offset, max_offset;
+	float offset, effective_offset, min_offset, max_offset, snr = 0.0f;
 	double freq, sps, power;
 	complex *b;
 	circular_buffer *ub;
@@ -89,10 +89,10 @@ int c0_detect(usrp_source *u, int bi)
 		}
 		if (isatty(1) && g_verbosity == 0)
 		{
-			printf("...chan %i\r", i);
+			printf("...chan %4i\r", i);
 			fflush(stdout);
 		}
-		usleep(10000);
+		usleep(50000);
 		do
 		{
 			u->flush();
@@ -105,9 +105,9 @@ int c0_detect(usrp_source *u, int bi)
 
 		// first, we calculate the power in each channel
 		b = (complex *)ub->peek(&b_len);
-		power = sqrt(vectornorm2(b, frames_len));
+		power = sqrt(vectornorm2(b, frames_len) / frames_len);
 
-		r = detector->scan(b, b_len, &offset, 0);
+		r = detector->scan(b, b_len, &offset, 0, &snr);
 		effective_offset = offset - GSM_RATE / 4;
 		tuner_gain = u->get_tuner_gain();
 		if(r && (fabsf(effective_offset) < ERROR_DETECT_OFFSET_MAX))
@@ -125,12 +125,12 @@ int c0_detect(usrp_source *u, int bi)
 			found_count++;
 			printf("    chan: %4d (%.1fMHz ", i, freq / 1e6);
 			display_freq(effective_offset);
-			printf(")    power: %7.0f \ttuner gain: %ddB\n", power, tuner_gain);
+			printf(")    power: %5.0f \ttuner gain: %ddB \tsnr: %.0f\n", power, tuner_gain, snr);
 		}
 		else if(g_verbosity > 0)
 		{
-			printf("    chan: %4d (%.1fMHz):\tpower: %7.0f \ttuner gain: %ddB\n",
-			   i, freq / 1e6, power, tuner_gain);
+			printf("    chan: %4d (%.1fMHz):\tpower: %5.0f \ttuner gain: %ddB \tsnr: %.0f\n",
+			   i, freq / 1e6, power, tuner_gain, snr);
 		}
 
 	}

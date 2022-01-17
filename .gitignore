@@ -1,5 +1,6 @@
 *.o
 *.sw[op]
+*.bak
 Makefile
 Makefile.in
 configure

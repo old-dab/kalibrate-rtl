@@ -35,18 +35,18 @@ static const float		OFFSET_MAX	= 40e3;
 
 extern int g_verbosity;
 
-
 int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 {
 	unsigned int new_overruns = 0, overruns = 0;
 	int notfound = 0;
 	unsigned int s_len, b_len, consumed, count;
 	float offset = 0.0, min = 0.0, max = 0.0, avg_offset = 0.0,
-		stddev = 0.0, sps, offsets[AVG_COUNT];
+		stddev = 0.0, sps, snr, snr_sum = 0.0f, offsets[AVG_COUNT];
 	double total_ppm;
 	complex *cbuf;
 	fcch_detector *l;
 	circular_buffer *cb;
+	int tuner_gain;
 
 	l = new fcch_detector(u->sample_rate());
 
@@ -79,8 +79,9 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 		// get a pointer to the next samples
 		cbuf = (complex *)cb->peek(&b_len);
 
+		snr = 0.0f;
 		// search the buffer for a pure tone
-		if(l->scan(cbuf, b_len, &offset, &consumed))
+		if(l->scan(cbuf, b_len, &offset, &consumed, &snr))
 		{
 
 			// FCH is a sine wave at GSM_RATE / 4
@@ -91,10 +92,11 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 			{
 
 				offsets[count] = offset;
+				snr_sum += snr;
 				count += 1;
 
 				if(g_verbosity > 0)
-					printf("\toffset %3u: %.0f\n", count, offset);
+					printf("\toffset %3u: %.0f \tsnr: %0.f\n", count, offset, snr);
 			}
 		}
 		else
@@ -122,5 +124,7 @@ int offset_detect(usrp_source *u, int hz_adjust, float tuner_error)
 	total_ppm = u->m_freq_corr - ((avg_offset + hz_adjust) / u->m_center_freq) * 1000000;
 
 	printf("average absolute error: %.2f ppm\n", total_ppm);
+	tuner_gain = u->get_tuner_gain();
+	printf("tuner gain: %ddB \tsnr: %.0f\n", tuner_gain, snr_sum/count);
 	return 0;
 }
