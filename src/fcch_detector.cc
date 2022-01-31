@@ -50,7 +50,7 @@
 
 extern int g_debug;
 
-static const char * const fftw_plan_name = ".kal_fftw_plan";
+static const char * const fftwf_plan_name = ".kal_fftwf_plan";
 
 
 fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
@@ -80,36 +80,36 @@ fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
 	m_y_cb = new circular_buffer(8192, sizeof(complex), 1);
 	m_e_cb = new circular_buffer(1015808, sizeof(float), 0);
 
-	m_in = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * FFT_SIZE);
-	m_out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * FFT_SIZE);
+	m_in = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * FFT_SIZE);
+	m_out = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * FFT_SIZE);
 	if((!m_in) || (!m_out))
-		throw std::runtime_error("fcch_detector: fftw_malloc failed!");
+		throw std::runtime_error("fcch_detector: fftwf_malloc failed!");
 #ifndef _WIN32
 	home = getenv("HOME");
-	if(strlen(home) + strlen(fftw_plan_name) + 2 < sizeof(plan_name))
+	if(strlen(home) + strlen(fftwf_plan_name) + 2 < sizeof(plan_name))
 	{
 		strcpy(plan_name, home);
 		strcat(plan_name, "/");
-		strcat(plan_name, fftw_plan_name);
+		strcat(plan_name, fftwf_plan_name);
 		if((plan_fp = fopen(plan_name, "r")))
 		{
-			fftw_import_wisdom_from_file(plan_fp);
+			fftwf_import_wisdom_from_file(plan_fp);
 			fclose(plan_fp);
 		}
-		m_plan = fftw_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
+		m_plan = fftwf_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
 		   FFTW_MEASURE);
 		if((plan_fp = fopen(plan_name, "w")))
 		{
-			fftw_export_wisdom_to_file(plan_fp);
+			fftwf_export_wisdom_to_file(plan_fp);
 			fclose(plan_fp);
 		}
 	}
 	else
 #endif
-		m_plan = fftw_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
+		m_plan = fftwf_plan_dft_1d(FFT_SIZE, m_in, m_out, FFTW_FORWARD,
 		   FFTW_ESTIMATE);
 	if(!m_plan)
-		throw std::runtime_error("fcch_detector: fftw plan failed!");
+		throw std::runtime_error("fcch_detector: fftwf plan failed!");
 }
 
 
@@ -334,7 +334,7 @@ float fcch_detector::freq_detect(const complex *s, const unsigned int s_len, flo
 		m_in[i][1] = 0;
 	}
 
-	fftw_execute(m_plan);
+	fftwf_execute(m_plan);
 
 	for(i = 0; i < FFT_SIZE; i++)
 		fft[i] = complex(m_out[i][0], m_out[i][1]);

@@ -33,8 +33,12 @@ find_package(Threads)
     message(STATUS "CMAKE_THREAD_LIBS_INIT: ${CMAKE_THREAD_LIBS_INIT}")
 
 
-pkg_search_module(FFTW REQUIRED fftw3 IMPORTED_TARGET)
+# pkg_search_module(FFTW REQUIRED fftw3 IMPORTED_TARGET)
 
+find_package(FFTW3f)
+if (NOT FFTW3F_FOUND)
+    message(FATAL_ERROR "please install FFTW3")
+endif ()
 
 
 set(SOURCE_FILES 
@@ -67,13 +71,13 @@ endif()
 target_include_directories(kal PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${LIBRTLSDR_INCLUDE_DIR}
-    PkgConfig::FFTW
+    ${FFTW_INCLUDE_DIRS}  # PkgConfig::FFTW
     ${THREADS_PTHREADS_INCLUDE_DIR}
 )
 
 target_link_libraries(kal PRIVATE
     ${LIBRTLSDR_LIBRARIES}
-    PkgConfig::FFTW
+    ${FFTW3F_LIBRARIES}  # PkgConfig::FFTW
     ${CMAKE_THREAD_LIBS_INIT}
 )
 

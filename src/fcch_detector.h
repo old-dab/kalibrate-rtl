@@ -83,6 +83,6 @@ private:
 			*m_y_cb,
 			*m_e_cb;
 
-	fftw_complex	*m_in, *m_out;
-	fftw_plan	m_plan;
+	fftwf_complex	*m_in, *m_out;
+	fftwf_plan	m_plan;
 };
