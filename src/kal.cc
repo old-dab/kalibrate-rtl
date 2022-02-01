@@ -91,7 +91,9 @@ void usage(char *prog)
 	printf("\t-E\tmanual frequency offset in hz\n");
 	printf("\t-v\tverbose\n");
 	printf("\t-D\tenable debug messages\n");
+#if HAVE_RTLSDR_OPT_HELP == 1
 	printf("%s", rtlsdr_get_opt_help(g_verbosity));
+#endif
 	exit(-1);
 }
 
@@ -266,9 +268,11 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+#if HAVE_RTLSDR_OPT_HELP == 1
 	if (rtlOpts) {
 		rtlsdr_set_opt_string(u->dev_handle(), rtlOpts, g_verbosity);
 	}
+#endif
 
 	if(!bts_scan)
 	{

@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.1)
 
 project(kal VERSION 0.4.2)
 
+option(GITHUB_RTLSDR  "using https://github.com/librtlsdr/librtlsdr or .."  OFF)
+option(OLD_DAB_RTLSDR "using https://github.com/old-dab/rtlsdr "  OFF)
+
+
 #select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
@@ -55,7 +59,17 @@ set(SOURCE_FILES
 add_executable(kal ${SOURCE_FILES})
 
 target_compile_options(kal  PRIVATE  -Wall -Wextra -Wsign-compare -fvisibility=hidden)
-target_compile_definitions(kal PRIVATE _GNU_SOURCE=1 HAVE_DITHERING=1 HAVE_GET_TUNER_GAIN=0)
+
+if (GITHUB_RTLSDR)
+    target_compile_definitions(kal PRIVATE _GNU_SOURCE=1 HAVE_DITHERING=1 HAVE_GET_TUNER_GAIN=0 HAVE_RTLSDR_OPT_HELP=1)
+elseif (OLD_DAB_RTLSDR)
+    target_compile_definitions(kal PRIVATE _GNU_SOURCE=1 HAVE_DITHERING=1 HAVE_GET_TUNER_GAIN=1 HAVE_RTLSDR_OPT_HELP=0)
+else()
+    target_compile_definitions(kal PRIVATE _GNU_SOURCE=1 HAVE_DITHERING=0 HAVE_GET_TUNER_GAIN=0 HAVE_RTLSDR_OPT_HELP=0)
+endif()
+
+
+target_compile_definitions(kal PRIVATE _GNU_SOURCE=1 HAVE_DITHERING=1 HAVE_GET_TUNER_GAIN=0 HAVE_RTLSDR_OPT_HELP=0)
 
 if(MINGW)
     # Fix printf %zu
