@@ -10,32 +10,25 @@ get a rough initial estimate yourself, or use a project which can correct larger
 offsets automatically. For example https://github.com/viraptor/fm_tune or
 https://github.com/JiaoXianjun/LTE-Cell-Scanner
 
+
 Building for Windows with Mingw64
 ======================================
 First build this librtlsdr: https://github.com/old-dab/rtlsdr.git
-
 Download and extract fftw-3.3.5-dll64.zip from here: https://fftw.org/install/windows.html
+Build lib: dlltool -d libfftw3-3.def -l libfftw3-3.a
 ```
 git clone https://github.com/old-dab/kalibrate-rtl.git
 cd kalibrate-rtl
-mkdir lib
 mkdir build
+cd build
 ```
-Copy rtl-sdr.h and rtl-sdr_export.h from /rtlsdr/include to kalibrate-rtl/src
-
-Copy librtlsdr.dll.a from /rtlsdr/build/src to kalibrate-rtl/lib
-
+Copy rtl-sdr.h and rtl-sdr_export.h from /rtlsdr/include to the iclude directory of mingw64
+Copy librtlsdr.dll.a from /rtlsdr/build/src to the lib directory of mingw64
 Copy librtlsdr.dll from /rtlsdr/build/src to kalibrate-rtl/build
-
-Copy fftw3.h to kalibrate-rtl/src
-
-Copy libfftw3-3.def to kalibrate-rtl/lib
-
+Copy fftw3.h to the iclude directory of mingw64
+Copy libfftw3-3.def to the lib directory of mingw64
 Copy libfftw3-3.dll to kalibrate-rtl/build
 ```
-cd lib
-dlltool -d libfftw3-3.def -l libfftw3-3.a
-cd ../build
 cmake .. -G"MinGW Makefiles"
 mingw32-make
 ```
