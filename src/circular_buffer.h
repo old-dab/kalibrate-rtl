@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2010, Joshua Lackey
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     *  Redistributions of source code must retain the above copyright
  *        notice, this list of conditions and the following disclaimer.
  *
@@ -80,8 +80,10 @@ private:
 
 	unsigned int m_overwrite;
 
+#ifndef _WIN32
 	void *m_base;
 	unsigned int m_pagesize;
+#endif
 
 	pthread_mutex_t	m_mutex;
 };

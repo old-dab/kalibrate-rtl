@@ -50,7 +50,9 @@
 
 extern int g_debug;
 
+#ifndef _WIN32
 static const char * const fftw_plan_name = ".kal_fftw_plan";
+#endif
 
 
 fcch_detector::fcch_detector(const float sample_rate, const unsigned int D,
@@ -182,40 +184,6 @@ static inline unsigned int low_to_high(float e, float a)
 }
 
 
-static inline int peak_valley(complex *c, unsigned int c_len, complex peak, unsigned int peak_i, unsigned int width, float *p2m)
-{
-	float valley = 0.0;
-	unsigned int i, valley_count = 0;
-
-	// these constants aren't the best for all burst types
-	for(i = 2; i < 2 + width; i++)
-	{
-		if(i <= peak_i)
-		{
-			valley += norm(c[peak_i - i]);
-			valley_count += 1;
-		}
-		if(peak_i + i < c_len)
-		{
-			valley += norm(c[peak_i + i]);
-			valley_count += 1;
-		}
-	}
-
-	if(valley_count < 2)
-	{
-		fprintf(stderr, "error: bad valley_count\n");
-		return -1;
-	}
-	valley = sqrtf(valley / (float)valley_count) + 0.00001;
-
-	if(p2m)
-		*p2m = sqrtf(norm(peak)) / valley;
-
-	return 0;
-}
-
-
 static inline float sinc(const float x)
 {
 	if((x <= -0.0001) || (0.0001 <= x))
@@ -305,12 +273,6 @@ static inline float itof(float index, float sample_rate, unsigned int fft_size)
 }
 
 
-static inline unsigned int ftoi(float frequency, float sample_rate, unsigned int fft_size)
-{
-	return (frequency / sample_rate) * fft_size;
-}
-
-
 #ifndef MIN
 #define MIN(a, b) (a)<(b)?(a):(b)
 #endif /* !MIN */
@@ -343,16 +305,6 @@ float fcch_detector::freq_detect(const complex *s, const unsigned int s_len, flo
 	if(pm)
 		*pm = norm(peak) / avg_power;
 	return itof(max_i, m_sample_rate, FFT_SIZE);
-}
-
-
-static inline void display_complex(const complex *s, unsigned int s_len)
-{
-	for(unsigned int i = 0; i < s_len; i++)
-	{
-		printf("%f\n", s[i].real());
-		printf("%f\n", s[i].imag());
-	}
 }
 
 

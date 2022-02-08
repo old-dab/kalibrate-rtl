@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2010, Joshua Lackey
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     *  Redistributions of source code must retain the above copyright
  *        notice, this list of conditions and the following disclaimer.
  *
@@ -51,7 +51,7 @@ class fcch_detector {
 public:
 	fcch_detector(const float sample_rate, const unsigned int D = 8, const float p = 1.0 / 32.0, const float G = 1.0 / 12.5);
 	~fcch_detector();
-	unsigned int scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed);
+	unsigned int scan(const complex *s, const unsigned int s_len, float *offset, unsigned int *consumed, float *snr);
 	float freq_detect(const complex *s, const unsigned int s_len, float *pm);
 	unsigned int update(const complex *s, unsigned int s_len);
 	int next_norm_error(float *error);
@@ -70,9 +70,7 @@ private:
 
 	unsigned int	m_w_len,
 			m_D,
-			m_check_G,
 			m_filter_delay,
-			m_lpf_len,
 			m_fcch_burst_len;
 	float		m_sample_rate,
 			m_p,
